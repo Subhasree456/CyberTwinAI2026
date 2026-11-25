@@ -1,0 +1,71 @@
+Digital Twin Cyber War - HUNTER AI
+==================================
+
+Contents
+- React UI source (src)
+- Node/Express API (server)
+- Authorised network-flow shipper (collectors/flow-shipper.mjs)
+- Unit/API and Playwright tests (tests)
+- README.md with architecture, API, live-capability and deployment notes
+
+Requirements
+- Node.js 24 or newer
+
+Quick preview (development)
+1. npm ci
+2. npm run dev
+3. Open http://localhost:5173
+
+Production-style run
+1. npm ci
+2. Copy .env.example to .env and set NODE_ENV=production plus either
+   SEED_DEMO_USERS=true with a strong DEMO_PASSWORD (not the default used below)
+   or BOOTSTRAP_ADMIN_EMAIL / BOOTSTRAP_ADMIN_PASSWORD. Strict startup validation
+   refuses to boot with unsafe production configuration.
+3. npm run build
+4. npm run start:prod
+5. Open https://your-host (or http://127.0.0.1:8787 for a local check)
+
+Demo logins
+- alex@northwind.io / TwinDemo!2026 (Super Admin)
+- priya@northwind.io / TwinDemo!2026 (Security Analyst)
+- maya@northwind.io / TwinDemo!2026 (Read Only)
+
+Live capabilities (server-side, not simulated)
+- Real-time ingestion: POST /api/telemetry/ingest. Create a workspace token in
+  Settings -> Security & access, or sign in with hunter:write.
+  GET /api/telemetry/stream delivers Server-Sent Events.
+- Authorised network monitoring: POST /api/network/flows accepts Zeek, Suricata,
+  NetFlow and generic JSON records. Ship them with collectors/flow-shipper.mjs.
+  Raw packet capture stays on the sensor you control.
+- Rule-based attack detection: stateful brute-force (T1110), port-scan (T1046),
+  beaconing (T1071.001), fan-out, known-bad destination and blocked-egress rules
+  over rolling windows. GET /api/detections lists them; POST
+  /api/detections/simulate runs a labelled synthetic attack and sends no packets.
+- Real SIEM/EDR connectors: Splunk, Elastic, Microsoft Sentinel, Defender for
+  Endpoint, CrowdStrike Falcon, Wazuh and generic pull APIs. They report live
+  only when credentials exist and never substitute mock events.
+- ML anomaly detection: per-workspace isolation forest over stored telemetry.
+  Scores and explanations are written back to each event.
+- Live threat intelligence: keyless RDAP lookups for IPs/domains; AbuseIPDB and
+  AlienVault OTX add reputation when ABUSEIPDB_API_KEY / OTX_API_KEY are set.
+- HUNTER assistant: any OpenAI-compatible endpoint via HUNTER_LLM_BASE_URL,
+  HUNTER_LLM_API_KEY and HUNTER_LLM_MODEL. Without it the API returns
+  assistant_not_configured instead of canned answers.
+- Approval-gated response: analysts propose block-ip, isolate-host,
+  revoke-sessions or disable-identity. Only a Super Admin approval executes a
+  playbook; automation only queues proposals. See .env.example.
+- Plan payment: a manual UPI transfer to the number shown on the signed-in
+  Subscription page. The app cannot verify transfers; a Super Admin applies the
+  plan after confirming the payment.
+
+Notes
+- node_modules, dist and the local SQLite database are intentionally not
+  included. npm ci restores dependencies and npm run build creates dist.
+- The database and schema are created on first run. Outside production the demo
+  workspace and users are seeded automatically; production requires explicit
+  bootstrap or demo settings.
+- The demo password above is for local demo use only. Production startup refuses
+  the published default password and unsafe configuration; see .env.example and
+  README.md.
+- To start with a fresh database, delete server/data/dtcw.sqlite and restart.
